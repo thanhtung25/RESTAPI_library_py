@@ -1,0 +1,137 @@
+from library.extension import db
+from library.library_ma import BooksSchema
+from library.model import Books , Categories
+from flask import request, jsonify
+from sqlalchemy.sql import func
+
+book_schema = BooksSchema()
+books_schema = BooksSchema(many=True)
+
+
+
+def add_book_service():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data"}), 400
+    required_fields = [
+        "title",
+        "isbn",
+        "language",
+        "publish_year",
+        "description",
+        "image_url",
+        "id_category",
+        "id_author"
+    ]
+    for field in required_fields:
+        if field not in data:
+            return jsonify({"error": f"{field} is required"}), 400
+    try:
+        new_book = Books(
+            data["id_category"],
+            data["id_author"],
+            data["title"],
+            data["isbn"],
+            data["language"],
+            data["publish_year"],
+            data["description"],
+            data["image_url"]
+        )
+        db.session.add(new_book)
+        db.session.commit()
+        return jsonify(book_schema.dump(new_book)), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": str(e)
+        }), 500
+    
+
+def get_book_by_id_services(id_book):
+    book = Books.query.get(id_book)
+    if book:
+        return book_schema.jsonify(book)
+    else:
+        return jsonify({"message": "Not found books "}) , 404
+
+def get_all_book_services():
+    books = Books.query.all()
+    if books:
+        return books_schema.jsonify(books)
+    else:
+        return jsonify({"message": "Not found books "}) , 404
+    
+def update_book_by_id_services(id_book):
+    book = Books.query.get(id_book)
+    data = request.get_json()
+
+    if not book:
+        return jsonify({"message": "Not found book"}), 404
+
+    if not data:
+        return jsonify({"error": "No data"}), 400
+
+    try:
+        if "title" in data:
+            book.title = data["title"]
+
+        if "isbn" in data:
+            book.isbn = data["isbn"]
+
+        if "language" in data:
+            book.language = data["language"]
+
+        if "publish_year" in data:
+            book.publish_year = data["publish_year"]
+
+        if "description" in data:
+            book.description = data["description"]
+
+        if "image_url" in data:
+            book.image_url = data["image_url"]
+
+        if "id_category" in data:
+            book.id_category = data["id_category"]
+
+        if "id_author" in data:
+            book.id_author = data["id_author"]
+
+        db.session.commit()
+
+        return jsonify(book_schema.dump(book)), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "can not update book", "error": str(e)}), 500
+
+    finally:
+        db.session.close()
+        
+def delete_book_by_id_services(id_book):
+    book = Books.query.get(id_book)
+    if book:
+        try:
+            db.session.delete(book)
+            db.session.commit()
+            return "book deleted"
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"message": "can not delete book "}) , 404
+    else:
+        return "Not found book"
+    
+
+def get_book_by_category_service(category):
+    category = category.strip()
+
+    books = (
+        Books.query
+        .join(Categories)
+        .filter(Categories.name == category)
+        .all()
+    )
+
+    if books:
+        return books_schema.jsonify(books)
+    else:
+        return jsonify({"message": f"Not found books by {category}"}), 404

@@ -1,0 +1,6 @@
+flask
+flask_cors
+flask_restx 
+flask-sqlalchemy
+flask_marshmallow
+python-dotenv
