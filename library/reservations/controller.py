@@ -4,7 +4,8 @@ from .services import (
     get_reservation_by_id_services,
     add_reservation_service,
     update_reservation_by_id_services,
-    delete_reservation_by_id_services
+    delete_reservation_by_id_services,
+    get_reservations_by_user_service
 )
 
 reservations = Blueprint("reservations", __name__)
@@ -33,3 +34,7 @@ def update_reservation_by_id(id_reservation):
 @reservations.route("/reservations-management/reservation/<int:id_reservation>", methods=["DELETE"])
 def delete_reservation_by_id(id_reservation):
     return delete_reservation_by_id_services(id_reservation)
+
+@reservations.route("/reservations/user/<int:id_user>", methods=["GET"])
+def get_reservations_by_user(id_user):
+    return get_reservations_by_user_service(id_user)

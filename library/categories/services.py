@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from library.extension import db
 from library.library_ma import CategoriesSchema
-from library.model import Categories
+from library.model import Categories, Books
 
 category_schema = CategoriesSchema()
 categories_schema = CategoriesSchema(many=True)
@@ -77,3 +77,17 @@ def delete_category_by_id_services(id_category):
         return jsonify({"error": str(e)}), 500
     finally:
         db.session.close()
+
+def get_categoris_has_books_service():
+    try:
+        categories = (
+            db.session.query(Categories)
+            .join(Books, Books.id_category == Categories.id_category)
+            .distinct()
+            .all()
+        )
+
+        return categories_schema.jsonify(categories), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

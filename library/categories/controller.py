@@ -4,7 +4,8 @@ from .services import (
     get_category_by_id_services,
     add_category_service,
     update_category_by_id_services,
-    delete_category_by_id_services
+    delete_category_by_id_services,
+    get_categoris_has_books_service
 )
 
 categories = Blueprint("categories", __name__)
@@ -33,3 +34,7 @@ def update_category_by_id(id_category):
 @categories.route("/categories-management/category/<int:id_category>", methods=["DELETE"])
 def delete_category_by_id(id_category):
     return delete_category_by_id_services(id_category)
+
+@categories.route("/categories-management/categories/has-books", methods=["GET"])
+def Get_categories_has_books():
+    return get_categoris_has_books_service()
