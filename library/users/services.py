@@ -1,8 +1,11 @@
+import os
+import uuid
 from datetime import datetime
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 from library.extension import db
 from library.library_ma import UsersSchema
 from library.model import Users
+from werkzeug.utils import secure_filename
 
 user_schema = UsersSchema()
 users_schema = UsersSchema(many=True)
@@ -79,7 +82,7 @@ def update_user_by_id_services(id_user):
     try:
         for field in [
             "full_name", "gender", "email", "phone", "username", "password",
-            "role", "status", "library_card", "address", "avatar_url"
+            "role", "status", "library_card", "address",
         ]:
             if field in data:
                 setattr(user, field, data[field])
@@ -143,3 +146,56 @@ def login_services():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_avatar_service(id_user):
+    user = Users.query.get(id_user)
+
+    if not user:
+        return jsonify({"message": "Not found user"}), 404
+
+    if "avatar" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["avatar"]
+
+    if file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": "Invalid image format"}), 400
+
+    try:
+        filename = secure_filename(file.filename)
+        ext = filename.rsplit(".", 1)[1].lower()
+        new_filename = f"{uuid.uuid4().hex}.{ext}"
+
+        upload_folder = os.path.join(
+            current_app.root_path,
+            "static",
+            "uploads",
+            "avatars"
+        )
+        os.makedirs(upload_folder, exist_ok=True)
+
+        file_path = os.path.join(upload_folder, new_filename)
+        file.save(file_path)
+
+        user.avatar_url = f"/static/uploads/avatars/{new_filename}"
+        db.session.commit()
+
+        return jsonify({
+            "message": "Avatar uploaded successfully",
+            "avatar_url": user.avatar_url,
+            "user": user_schema.dump(user)
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.session.close()

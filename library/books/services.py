@@ -135,3 +135,5 @@ def get_book_by_category_service(category):
         return books_schema.jsonify(books)
     else:
         return jsonify({"message": f"Not found books by {category}"}), 404
+    
+    

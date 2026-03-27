@@ -4,7 +4,8 @@ from .services import (
     get_loan_by_id_services,
     add_loan_service,
     update_loan_by_id_services,
-    delete_loan_by_id_services
+    delete_loan_by_id_services,
+    get_loan_by_user_id_service,
 )
 
 loans = Blueprint("loans", __name__)
@@ -33,3 +34,7 @@ def update_loan_by_id(id_loan):
 @loans.route("/loans-management/loan/<int:id_loan>", methods=["DELETE"])
 def delete_loan_by_id(id_loan):
     return delete_loan_by_id_services(id_loan)
+
+@loans.route("/loans-management/loan/user/<int:id_user>", methods=["GET"])
+def get_loan_by_user(id_user):
+    return get_loan_by_user_id_service(id_user)

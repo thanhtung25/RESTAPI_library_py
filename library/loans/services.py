@@ -107,3 +107,9 @@ def delete_loan_by_id_services(id_loan):
         return jsonify({"error": str(e)}), 500
     finally:
         db.session.close()
+
+def get_loan_by_user_id_service(id_user):
+    loans = Loans.query.filter_by(id_user=id_user).all()
+    schema = LoansSchema(many=True)
+
+    return jsonify(schema.dump(loans)), 200

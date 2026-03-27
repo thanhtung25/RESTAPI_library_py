@@ -119,3 +119,15 @@ def delete_book_copy_by_id_services(id_copy):
             return jsonify({"message": "can not delete book copy "}) , 404
     else:
         return "Not found book copy"
+
+def get_book_copy_by_id_book_services(id_book):
+    try:
+        copies = BookCopies.query.filter_by(id_book=id_book).all()  # BookCopies, không phải BookCopy
+
+        if not copies:
+            return jsonify({"message": f"No book copies found for book id {id_book}"}), 404
+
+        return book_copies_schema.jsonify(copies), 200  # dùng marshmallow schema như các hàm khác
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

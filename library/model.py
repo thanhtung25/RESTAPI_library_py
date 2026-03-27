@@ -112,7 +112,6 @@ class BookCopies(db.Model):
 
     id_copy = db.Column(db.Integer, primary_key=True)
     id_book = db.Column(db.Integer, db.ForeignKey("books.id_book"), nullable=False)
-
     barcode = db.Column(db.String(100), unique=True, nullable=False)
     qr_code = db.Column(db.String(100), unique=True, nullable=True)
     location = db.Column(db.String(100), nullable=True)
@@ -144,7 +143,7 @@ class Loans(db.Model):
     id_user = db.Column(db.Integer, db.ForeignKey("users.id_user"), nullable=False)
     id_copy = db.Column(db.Integer, db.ForeignKey("book_copies.id_copy"), nullable=False)
 
-    issue_date = db.Column(db.Date, nullable=False)
+    issue_date = db.Column(db.Date, nullable=True)
     return_date = db.Column(db.Date, nullable=False)
     actual_return_date = db.Column(db.Date, nullable=True)
     status = db.Column(db.String(50), nullable=False, default="borrowed")
