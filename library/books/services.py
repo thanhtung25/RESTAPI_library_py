@@ -1,12 +1,18 @@
+import os
+import uuid
 from library.extension import db
 from library.library_ma import BooksSchema
 from library.model import Books , Categories
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 from sqlalchemy.sql import func
+from werkzeug.utils import secure_filename
+
+
 
 book_schema = BooksSchema()
 books_schema = BooksSchema(many=True)
 
+_ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 
 def add_book_service():
@@ -137,3 +143,47 @@ def get_book_by_category_service(category):
         return jsonify({"message": f"Not found books by {category}"}), 404
     
     
+def _allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in _ALLOWED_EXTENSIONS
+
+
+def upload_book_image_service(id_book):
+    book = Books.query.get(id_book)
+    if not book:
+        return jsonify({"message": "Not found book"}), 404
+    if "image_book" not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+    file = request.files["image_book"]
+
+    if file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
+    if not _allowed_file(file.filename):
+        return jsonify({"error": "Invalid image format"}), 400
+    try:
+        filename = secure_filename(file.filename)
+        ext = filename.rsplit(".", 1)[1].lower()
+        new_filename = f"{uuid.uuid4().hex}.{ext}"
+        upload_folder = os.path.join(
+                current_app.root_path,
+                "static",
+                "uploads",
+                "image_book"
+            )
+        os.makedirs(upload_folder, exist_ok=True)
+        file_path = os.path.join(upload_folder, new_filename)
+        file.save(file_path)
+
+        book.image_url = f"/static/uploads/books/{new_filename}"
+        db.session.commit()
+
+        return jsonify({
+            "message": "Book uploaded successfully",
+            "image_url": book.image_url,
+            "book": book_schema.dump(book)
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.session.close()
+

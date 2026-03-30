@@ -2,7 +2,8 @@ from flask import Blueprint
 from .services import (add_book_service, get_book_by_id_services
                     ,get_all_book_services,update_book_by_id_services,
                     delete_book_by_id_services,
-                    get_book_by_category_service)
+                    get_book_by_category_service,
+                    upload_book_image_service)
 books = Blueprint("book", __name__)
 
 
@@ -36,3 +37,7 @@ def delete_book_id(id_book):
 @books.route("/book-management/book/<string:category>", methods= ['GET'] )
 def get_book_by_category(category):
     return get_book_by_category_service(category)
+
+@books.route("/book-management/book/<int:id_book>/image_book", methods=['POST'])
+def upload_book_image(id_book):
+    return upload_book_image_service(id_book)
