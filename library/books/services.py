@@ -48,9 +48,10 @@ def add_book_service():
         return jsonify(book_schema.dump(new_book)), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({
-            "error": str(e)
-        }), 500
+        err = str(e)
+        if "UNIQUE constraint failed: books.isbn" in err:
+            return jsonify({"message": f"ISBN '{data['isbn']}' đã tồn tại trong hệ thống"}), 409
+        return jsonify({"message": err}), 500
     
 
 def get_book_by_id_services(id_book):
@@ -186,4 +187,3 @@ def upload_book_image_service(id_book):
         return jsonify({"error": str(e)}), 500
     finally:
         db.session.close()
-
