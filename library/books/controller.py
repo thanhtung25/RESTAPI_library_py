@@ -38,6 +38,6 @@ def delete_book_id(id_book):
 def get_book_by_category(category):
     return get_book_by_category_service(category)
 
-@books.route("/book-management/book/<int:id_book>/image_book", methods=['POST'])
+@books.route("/book-management/book/<int:id_book>/image_book", methods=['PUT'])
 def upload_book_image(id_book):
     return upload_book_image_service(id_book)

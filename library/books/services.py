@@ -151,9 +151,9 @@ def upload_book_image_service(id_book):
     book = Books.query.get(id_book)
     if not book:
         return jsonify({"message": "Not found book"}), 404
-    if "image_book" not in request.files:
+    if "books" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
-    file = request.files["image_book"]
+    file = request.files["books"]
 
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
@@ -167,7 +167,7 @@ def upload_book_image_service(id_book):
                 current_app.root_path,
                 "static",
                 "uploads",
-                "image_book"
+                "books"
             )
         os.makedirs(upload_folder, exist_ok=True)
         file_path = os.path.join(upload_folder, new_filename)
