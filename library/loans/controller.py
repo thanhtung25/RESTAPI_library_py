@@ -6,6 +6,7 @@ from .services import (
     update_loan_by_id_services,
     delete_loan_by_id_services,
     get_loan_by_user_id_service,
+    sync_overdue_service,
 )
 
 loans = Blueprint("loans", __name__)
@@ -35,6 +36,12 @@ def update_loan_by_id(id_loan):
 def delete_loan_by_id(id_loan):
     return delete_loan_by_id_services(id_loan)
 
+
 @loans.route("/loans-management/loan/user/<int:id_user>", methods=["GET"])
 def get_loan_by_user(id_user):
     return get_loan_by_user_id_service(id_user)
+
+
+@loans.route("/loans-management/loans/sync-overdue", methods=["PATCH"])
+def sync_overdue():
+    return sync_overdue_service()

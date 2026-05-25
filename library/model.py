@@ -146,7 +146,7 @@ class Loans(db.Model):
     issue_date = db.Column(db.Date, nullable=True)
     return_date = db.Column(db.Date, nullable=False)
     actual_return_date = db.Column(db.Date, nullable=True)
-    status = db.Column(db.String(50), nullable=False, default="borrowed")
+    status = db.Column(db.String(50), nullable=False, default="reserved")
     renewal_count = db.Column(db.Integer, nullable=False, default=0)
 
     def __init__(
@@ -156,7 +156,7 @@ class Loans(db.Model):
         issue_date,
         return_date,
         actual_return_date=None,
-        status="borrowed",
+        status="reserved",
         renewal_count=0
     ):
         self.id_user = id_user

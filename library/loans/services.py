@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from flask import request, jsonify
 from library.extension import db
 from library.library_ma import LoansSchema
@@ -108,8 +108,40 @@ def delete_loan_by_id_services(id_loan):
     finally:
         db.session.close()
 
+
 def get_loan_by_user_id_service(id_user):
     loans = Loans.query.filter_by(id_user=id_user).all()
     schema = LoansSchema(many=True)
-
     return jsonify(schema.dump(loans)), 200
+
+
+def sync_overdue_service():
+    try:
+        today = date.today()
+
+        overdue_loans = Loans.query.filter(
+            Loans.return_date < today,
+            Loans.status.notin_(["overdue", "returned"])
+        ).all()
+        print(f"[sync_overdue] found {len(overdue_loans)} loans to update")
+        for l in overdue_loans:
+            print(f"  → id={l.id_loan} return_date={l.return_date} status={l.status}")
+        if not overdue_loans:
+            return jsonify({"updated_count": 0, "updated_ids": []}), 200
+
+        updated_ids = []
+        for loan in overdue_loans:
+            loan.status = "overdue"
+            updated_ids.append(loan.id_loan)
+
+        db.session.commit()
+        return jsonify({
+            "updated_count": len(updated_ids),
+            "updated_ids": updated_ids
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.session.close()

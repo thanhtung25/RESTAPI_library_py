@@ -1,5 +1,5 @@
 from flask import Flask
-
+from flask_cors import CORS
 from .books.controller import books
 from .book_copies.controller import book_copies
 from .users.controller import users
@@ -52,7 +52,7 @@ def create_app(config_file="config.py"):
     db.init_app(app)
     ma.init_app(app)
 
-
+    CORS(app)
 
     create_db(app)
     app.register_blueprint(books)

@@ -6,6 +6,7 @@ from library.extension import db
 from library.library_ma import UsersSchema
 from library.model import Users
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 user_schema = UsersSchema()
 users_schema = UsersSchema(many=True)
@@ -24,7 +25,6 @@ def add_user_service():
     try:
         username = data["username"].strip()
 
-        # kiểm tra username đã tồn tại chưa
         existing_user = Users.query.filter_by(username=username).first()
         if existing_user:
             return jsonify({"error": "Username already exists"}), 400
@@ -33,14 +33,17 @@ def add_user_service():
         if data.get("birth_day"):
             birth_day = datetime.strptime(data["birth_day"], "%Y-%m-%d").date()
 
+        # ✅ Hash mật khẩu trước khi lưu
+        hashed_password = generate_password_hash(data["password"])
+
         new_user = Users(
             full_name=data["full_name"],
             birth_day=birth_day,
             gender=data.get("gender"),
             email=data.get("email"),
             phone=data.get("phone"),
-            username=data["username"],
-            password=data["password"],
+            username=username,
+            password=hashed_password,        # ← lưu hash
             role=data["role"],
             status=data.get("status", "active"),
             created_at=datetime.utcnow(),
@@ -81,11 +84,15 @@ def update_user_by_id_services(id_user):
 
     try:
         for field in [
-            "full_name", "gender", "email", "phone", "username", "password",
+            "full_name", "gender", "email", "phone", "username",
             "role", "status", "library_card", "address",
         ]:
             if field in data:
                 setattr(user, field, data[field])
+
+        # ✅ Hash mật khẩu mới nếu có cập nhật
+        if "password" in data:
+            user.password = generate_password_hash(data["password"])
 
         if "birth_day" in data:
             user.birth_day = datetime.strptime(data["birth_day"], "%Y-%m-%d").date()
@@ -133,7 +140,8 @@ def login_services():
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        if user.password != password:
+        # ✅ So sánh mật khẩu với hash đã lưu
+        if not check_password_hash(user.password, password):
             return jsonify({"error": "Wrong password"}), 401
 
         if user.status != "active":
@@ -146,6 +154,7 @@ def login_services():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
@@ -176,9 +185,7 @@ def upload_avatar_service(id_user):
 
         upload_folder = os.path.join(
             current_app.root_path,
-            "static",
-            "uploads",
-            "avatars"
+            "static", "uploads", "avatars"
         )
         os.makedirs(upload_folder, exist_ok=True)
 
